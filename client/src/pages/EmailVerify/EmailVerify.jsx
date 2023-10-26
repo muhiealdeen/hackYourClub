@@ -15,17 +15,12 @@ const EmailVerify = () => {
   const { isLoading, error, performFetch, cancelFetch } = useFetch(
     url,
     (response) => {
-      try {
-        if (response.success === true) {
-          setValidUrl(true);
-          setTimeout(() => {
-            navigate("/login");
-          }, 1500);
-        } else {
-          setValidUrl(false);
-        }
-      } catch (error) {
-        console.log(error);
+      if (response.success === true) {
+        setValidUrl(true);
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
+      } else {
         setValidUrl(false);
       }
     }
