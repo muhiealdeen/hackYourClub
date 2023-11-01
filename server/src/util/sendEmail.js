@@ -1,10 +1,9 @@
-// src/util/sendEmail
 import nodemailer from "nodemailer";
 
 const sendEmail = async (userEmail, subject, htmlTemplete) => {
   try {
-    console.log("userEmail", userEmail);
-    console.log("subjectttttt", subject);
+    // console.log("userEmail", userEmail);
+    // console.log("subjectttttt", subject);
     // console.log("htmlTemplete", htmlTemplete);
 
     const transporter = nodemailer.createTransport({
