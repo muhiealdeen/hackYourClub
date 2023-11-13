@@ -9,9 +9,12 @@ import crypto from "crypto";
 // Function to generate a new verification token
 const generateVerificationToken = (userId) => {
   const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date();
+  expiresAt.setMinutes(expiresAt.getMinutes() + 30);
   const verificationToken = new VerificationToken({
     userId,
     token,
+    expiresAt,
   });
   return verificationToken.save();
 };
@@ -24,6 +27,24 @@ const createVerificationHtmlTemplate = (link) => {
       <a href="${link}">Verify</a>
     </div>`;
 };
+// Function to hash the password
+const hashPassword = (password) => {
+  const salt = bcrypt.genSaltSync(10);
+  return bcrypt.hashSync(password, salt);
+};
+
+// Function to send verification email
+const sendVerificationEmail = async (user) => {
+  // Generate a new verification token
+  const savedVerificationToken = await generateVerificationToken(user._id);
+  // Create the verification link
+  const link = `http://localhost:8080/${user._id}/verify/${savedVerificationToken.token}`;
+  // Create the HTML template
+  const htmlTemplate = createVerificationHtmlTemplate(link);
+  // Send the email
+  await sendEmail(user.email, "Verify Your Email", htmlTemplate);
+};
+
 export const signup = async (req, res) => {
   try {
     const existingUser = await UserV3.findOne({ email: req.body.email });
@@ -34,74 +55,44 @@ export const signup = async (req, res) => {
           .status(400)
           .json({ success: true, result: "User already exists!" });
       } else {
-        const salt = bcrypt.genSaltSync(10);
-        const hash = bcrypt.hashSync(req.body.password, salt);
-
         existingUser.isAccountVerified = false;
         existingUser.isActive = false;
-        existingUser.password = hash;
+        existingUser.password = hashPassword(req.body.password);
         (existingUser.firstName = req.body.firstName),
           (existingUser.lastName = req.body.lastName),
           (existingUser.dateOfBirth = req.body.dateOfBirth),
           (existingUser.profileImage = req.body.profileImage),
           await existingUser.save();
 
-        // Generate a new verification token
-        const savedVerificationToken = await generateVerificationToken(
-          existingUser._id
-        );
-
-        // Create the verification link
-        const link = `http://localhost:8080/${existingUser._id}/verify/${savedVerificationToken.token}`;
-
-        // Create the HTML template
-        const htmlTemplate = createVerificationHtmlTemplate(link);
-
-        // Send the email
-        await sendEmail(existingUser.email, "Verify Your Email", htmlTemplate);
+        // Send verification email
+        await sendVerificationEmail(existingUser);
 
         return res.status(200).json({
           success: true,
           result: {
             message: "Account reactivated. Check your email for verification.",
-            userId: existingUser._id,
-            token: savedVerificationToken.token,
           },
         });
       }
     } else {
-      const salt = bcrypt.genSaltSync(10);
-      const hash = bcrypt.hashSync(req.body.password, salt);
-
       const newUser = new UserV3({
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         dateOfBirth: req.body.dateOfBirth,
         email: req.body.email,
-        password: hash,
+        password: hashPassword(req.body.password),
         profileImage: req.body.profileImage,
-        isAccountVerified: false,
+        isActive: false,
       });
       const user = await newUser.save();
+      // Send verification email
+      await sendVerificationEmail(user);
 
-      // Generate a new verification token
-      const savedVerificationToken = await generateVerificationToken(user._id);
-
-      // Create the verification link
-      const link = `http://localhost:8080/${user._id}/verify/${savedVerificationToken.token}`;
-
-      // Create the HTML template
-      const htmlTemplate = createVerificationHtmlTemplate(link);
-
-      // Send the email
-      await sendEmail(user.email, "Verify Your Email", htmlTemplate);
       return res.status(201).json({
         success: true,
         result: {
           message:
             "User registered successfully. Check your email for verification.",
-          userId: user._id,
-          token: savedVerificationToken.token,
         },
       });
     }
@@ -125,9 +116,18 @@ export const verification = async (req, res) => {
       userId: user._id,
       token: req.params.token,
     });
+    // console.log("verificationTokenVVVVVVV", verificationToken);
 
     if (!verificationToken) {
       return res.status(400).json({ message: "Invalid link." });
+    }
+    if (verificationToken.expiresAt < new Date()) {
+      user.isActive = false;
+      // await user.remove();
+      await verificationToken.remove();
+      return res.status(400).json({
+        message: "The verification link is expired.",
+      });
     }
     user.isAccountVerified = true;
     user.isActive = true;

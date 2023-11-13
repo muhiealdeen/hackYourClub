@@ -15,6 +15,7 @@ const EmailVerify = () => {
   const { isLoading, error, performFetch, cancelFetch } = useFetch(
     url,
     (response) => {
+      // console.log("response", response);
       if (response.success === true) {
         setValidUrl(true);
         setTimeout(() => {
@@ -37,6 +38,7 @@ const EmailVerify = () => {
   if (error) {
     return <div>Error: {error.message}</div>;
   }
+  // console.log("errorrrrr", error.message);
 
   // Render the loading component while waiting for the response
   if (isLoading) {
