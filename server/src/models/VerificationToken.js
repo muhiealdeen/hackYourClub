@@ -13,6 +13,10 @@ const verificationTokenSchema = new Schema(
       type: String,
       required: true,
     },
+    expiresAt: {
+      type: Date,
+      requierd: true,
+    },
   },
   { timestamps: true }
 );
