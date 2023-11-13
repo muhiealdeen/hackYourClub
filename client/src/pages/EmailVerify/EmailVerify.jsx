@@ -15,7 +15,7 @@ const EmailVerify = () => {
   const { isLoading, error, performFetch, cancelFetch } = useFetch(
     url,
     (response) => {
-      console.log("response", response);
+      // console.log("response", response);
       if (response.success === true) {
         setValidUrl(true);
         setTimeout(() => {

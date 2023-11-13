@@ -116,7 +116,7 @@ export const verification = async (req, res) => {
       userId: user._id,
       token: req.params.token,
     });
-    console.log("verificationTokenVVVVVVV", verificationToken);
+    // console.log("verificationTokenVVVVVVV", verificationToken);
 
     if (!verificationToken) {
       return res.status(400).json({ message: "Invalid link." });
