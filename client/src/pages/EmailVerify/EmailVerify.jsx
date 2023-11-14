@@ -15,14 +15,11 @@ const EmailVerify = () => {
   const { isLoading, error, performFetch, cancelFetch } = useFetch(
     url,
     (response) => {
-      // console.log("response", response);
       if (response.success === true) {
         setValidUrl(true);
         setTimeout(() => {
           navigate("/login");
         }, 1500);
-      } else {
-        setValidUrl(false);
       }
     }
   );
@@ -36,9 +33,24 @@ const EmailVerify = () => {
   }, []);
 
   if (error) {
-    return <div>Error: {error.message}</div>;
+    if (error.includes("expired")) {
+      setTimeout(() => {
+        navigate("/signup");
+      }, 5000);
+      return (
+        <div className="container_verify">
+          <h1>Verification Link Expired</h1>
+          <p>
+            Please sign up or try again to reactivate your account for a new
+            verification link.
+          </p>
+        </div>
+      );
+    } else {
+      // console.error("Fetch error:", error);
+      return <div>Error: Invalid link.</div>;
+    }
   }
-  // console.log("errorrrrr", error.message);
 
   // Render the loading component while waiting for the response
   if (isLoading) {
@@ -57,7 +69,9 @@ const EmailVerify = () => {
           <h1>Email verified successfully</h1>
         </div>
       ) : (
-        <h1>404 Not Found</h1>
+        <div>
+          <h1>404 Not Found</h1>
+        </div>
       )}
     </div>
   );
