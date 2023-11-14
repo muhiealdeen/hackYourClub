@@ -47,7 +47,7 @@ const EmailVerify = () => {
         </div>
       );
     } else {
-      console.error("Fetch error:", error);
+      // console.error("Fetch error:", error);
       return <div>Error: Invalid link.</div>;
     }
   }
