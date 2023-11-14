@@ -10,7 +10,7 @@ import crypto from "crypto";
 const generateVerificationToken = (userId) => {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date();
-  expiresAt.setMinutes(expiresAt.getMinutes() + 30);
+  expiresAt.setMinutes(expiresAt.getMinutes() + 1);
   const verificationToken = new VerificationToken({
     userId,
     token,
@@ -122,13 +122,15 @@ export const verification = async (req, res) => {
       return res.status(400).json({ message: "Invalid link." });
     }
     if (verificationToken.expiresAt < new Date()) {
-      user.isActive = false;
+      // user.isActive = false;
       // await user.remove();
+      console.log("*********************************");
       await verificationToken.remove();
-      return res.status(400).json({
+      return res.status(401).json({
         message: "The verification link is expired.",
       });
     }
+    console.log("++++++++++++++++++++++++++++++++++++");
     user.isAccountVerified = true;
     user.isActive = true;
     await user.save();
